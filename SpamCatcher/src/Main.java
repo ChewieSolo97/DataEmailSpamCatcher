@@ -17,15 +17,16 @@ public class Main {
     while(invalidInput) {
       try {
         System.out.println("Please enter the full path to your training data file.");
-        Scanner scan = new Scanner(System.in);
-        String trainingData = scan.nextLine();
+        //Scanner scan = new Scanner(System.in);
+        //String trainingData = scan.nextLine();
         //scan = new Scanner(new File(trainingData));
 
         System.out.println("Please enter the full path to your testing data file.");
-        String testingData = scan.nextLine();
+        //String testingData = scan.nextLine();
         //scan = new Scanner(new File(testingData));
-        setUpNB(trainingData);
+        setUpNB("/Users/Mitchell/Downloads/train"); // using string for testing
         invalidInput = false;
+
       } catch (Exception e) {
         System.out.println("Invalid path, please try again.");
       }
@@ -48,12 +49,19 @@ public class Main {
     File dir = new File(trainingData);
     ArrayList<String> spamWords = new ArrayList<>();
     ArrayList<String> notSpamWords = new ArrayList<>();
-    HashMap<String, Integer> spam = new HashMap<>();
-    HashMap<String, Integer> notSpam = new HashMap<>();
+    HashMap<String, Double> spam = new HashMap<>();
+    HashMap<String, Double> notSpam = new HashMap<>();
     Scanner s = new Scanner(System.in);
+    int spamCount = 0;
+    int notSpamCount = 0;
     try {
       for (File file : dir.listFiles()) {
         s = new Scanner(file);
+        if (file.getName().contains("spm")) {
+          spamCount++;
+        } else {
+          notSpamCount++;
+        }
         while (s.hasNext()) {
           if (file.getName().contains("spm")) {
             spamWords.add(s.next());
@@ -62,20 +70,34 @@ public class Main {
           }
         }
       }
+
       s.close();
     } catch (Exception e) {
 
     }
 
     wordCounts(spamWords, spam);
-    for (String stuff : spam.keySet()) {
-      System.out.println("Word " + stuff + " appears " + spam.get(stuff) + " times");
+    wordCounts(notSpamWords, notSpam);
+
+    for (String word : spam.keySet()) {
+      spam.put(word, spam.get(word) / spamCount);
     }
-  }
+    for (String word : notSpam.keySet()) {
+      notSpam.put(word, notSpam.get(word) / notSpamCount);
+    }
 
+    classifyNB(spam, notSpam);
 
-  public static void wordCounts(ArrayList<String> words, HashMap<String, Integer> wordCount) {
-    int count = 1;
+//    for (String stuff : spam.keySet()) {
+//      System.out.println("Word " + stuff + " appears " + spam.get(stuff) + " times");
+//    }
+  } // end setUpNB
+
+  // lambda way didn't work so I did it the simple way instead and it works
+  // Its sorted and if the word is the same as the previous, increment count, otherwise reset to one
+  // then add to the map using the fact that it will replace duplicate keys with the most recent
+  public static void wordCounts(ArrayList<String> words, HashMap<String, Double> wordCount) {
+    double count = 1;
     String prev = "";
     Collections.sort(words);
     for (String word : words) {
@@ -89,41 +111,69 @@ public class Main {
     }
   }
 
+    // this should work but for whatever reason takes forever to run, I have yet to have it finish
+    //allWords.forEach((w) -> words.put(w, Collections.frequency(allWords, w)));
 
+
+  public static void classifyNB(HashMap<String, Double> spam, HashMap<String, Double> notSpam) {
+
+    File dir = new File("/Users/Mitchell/Downloads/test");
+    ArrayList<String> words = new ArrayList<>();
+    HashMap<String, Double> email = new HashMap<>();
+    Scanner s = new Scanner(System.in);
+    ArrayList<Double> spamProb = new ArrayList<Double>();
+    ArrayList<Double> notSpamProb = new ArrayList<Double>();
+
+    try {
+      for (File file : dir.listFiles()) {
+        s = new Scanner(file);
+        while (s.hasNext()) {
+          words.add(s.next());
+        }
+        wordCounts(words, email);
+        for (String word : email.keySet()) {
+          if(spam.keySet().contains(word)) {
+            spamProb.add(spam.get(word) * email.get(word));
+          } else {
+            spamProb.add(0.0); // fix this later, just using 0.0 for convenience
+          }
+        }
+        double probSpam = 1;
+        for (Double prob : spamProb) {
+          //System.out.println("Spam prob is: " + prob);
+          probSpam += (prob);
+        }
+
+
+        for (String word : email.keySet()) {
+          if(notSpam.keySet().contains(word)) {
+            notSpamProb.add(notSpam.get(word) * email.get(word));
+          } else {
+            notSpamProb.add(0.0); // fix this later, just using 0.0 for convenience
+          }
+        }
+        double probNotSpam = 1;
+        for (Double prob : notSpamProb) {
+          probNotSpam += (prob);
+        }
+
+
+        // empty out collections
+        words.clear();
+        email.clear();
+        spamProb.clear();
+        notSpamProb.clear();
+
+        System.out.println("The prob of being spam is: " + probSpam);
+        System.out.println("The prob of not being spam is: " + probNotSpam);
+      }
+      s.close();
+    } catch (Exception e) {
+
+    }
+  }
   public static void testingPurposes(String trainingData, String testingData) {
-//    try {
-//      // the directory of the training data
-//      // we should either make this user entry or keep it in the project folder
-//      File dir = new File(trainingData);
-//      HashMap<String, Integer> words = new HashMap<>(); // this will hold words and their frequency
-//      ArrayList<String> allWords = new ArrayList<>(); // use this to hold all the words
-//      ArrayList<MailVector> spam = new ArrayList<>();
-//      ArrayList<MailVector> notSpam = new ArrayList<>();
-//      HashMap<String, Integer> spamWords = new HashMap<>();
-//      HashMap<String, Integer> nonSpamWords = new HashMap<>();
-//
-//
-//      // import all the files and and their words to the arraylist
-//      for (File file : dir.listFiles()) {
-//        Scanner s = new Scanner(file);
-//        String line = "";
-//        while (s.hasNext()) {
-//          line = s.next();
-//          allWords.add(line);
-//        }
-//        s.close();
-//      }
-//
-//      for (File file : dir.listFiles()) {
-//        if(file.getName().contains("spm")) {
-//          spam.add(new MailVector(words));
-//        } else {
-//          notSpam.add(new MailVector(words));
-//        }
-//      }
-//
-//      // adding the spam and not spam emails to arrays of MailVectors just to see if it
-//      // would successfully split the emails by naming format
+
 //      int i = 1;
 //      for (MailVector name : spam) {
 //        System.out.println("This is the " + i++ + "st/nd/rd spam message " + name.toString());
@@ -133,34 +183,5 @@ public class Main {
 //      for (MailVector name : notSpam) {
 //        System.out.println("This is the " + i++ + "st/nd/rd non-spam message " + name.toString());
 //      }
-//
-//      // this should work but for whatever reason takes forever to run, I have yet to have it finish
-//      //allWords.forEach((w) -> words.put(w, Collections.frequency(allWords, w)));
-//
-//      // so I did it the simple way instead and it works
-//      // Its sorted and if the word is the same as the previous, increment count, otherwise reset to one
-//      // then add to the map using the fact that it will replace duplicate keys with the most recent
-////      int count = 1;
-////      String prev = "";
-////      Collections.sort(allWords);
-////      for (String word : allWords) {
-////        if (word.equals(prev)) {
-////          words.put(word, count++);
-////        } else {
-////          count = 1;
-////          words.put(word, count);
-////        }
-////        prev = word;
-////      }
-//      //Map.sortByKey(words);
-//      // print each word with its frequency, I'll sort by frequency later
-//      for (String stuff : words.keySet()) {
-//        //System.out.println("Word " + stuff + " appears " + words.get(stuff) + " times");
-//      }
-//
-//
-//    } catch (Exception e) {
-//      // maybe add an error message
-//    }
   }
 }
