@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 public class Main {
 
+  public static ArrayList<MailVector> emails = new ArrayList<>();
   public static void main(String args[]) {
 
     boolean invalidInput = true;
@@ -28,7 +29,7 @@ public class Main {
         invalidInput = false;
 
       } catch (Exception e) {
-        System.out.println("Invalid path, please try again.");
+        e.printStackTrace();
       }
     }
   }
@@ -73,7 +74,7 @@ public class Main {
 
       s.close();
     } catch (Exception e) {
-
+      System.out.println("in the set up exception ");
     }
 
     wordCounts(spamWords, spam);
@@ -123,10 +124,17 @@ public class Main {
     Scanner s = new Scanner(System.in);
     ArrayList<Double> spamProb = new ArrayList<Double>();
     ArrayList<Double> notSpamProb = new ArrayList<Double>();
-
+    ArrayList<MailVector> emailsAccuracy = new ArrayList<>();
+    double accuracy = 0;
+    int i = 0;
     try {
+//      for (File file : dir.listFiles()) {
+//        System.out.println("does this loop work");
+//      }
       for (File file : dir.listFiles()) {
+        //System.out.println("whats going on");
         s = new Scanner(file);
+        emailsAccuracy.add(new MailVector(file.getName().contains("spm") ? true : false));
         while (s.hasNext()) {
           words.add(s.next());
         }
@@ -157,20 +165,36 @@ public class Main {
           probNotSpam += (prob);
         }
 
+        if (probSpam > probNotSpam) {
+          emailsAccuracy.get(i).setSpam(true);
+        } else {
+          emailsAccuracy.get(i).setSpam(false);
+        }
+        //System.out.println("i equals: " + i);
+        i++;
 
         // empty out collections
         words.clear();
         email.clear();
         spamProb.clear();
         notSpamProb.clear();
-
-        System.out.println("The prob of being spam is: " + probSpam);
-        System.out.println("The prob of not being spam is: " + probNotSpam);
+         //emails.add(new MailVector()); set up vectors for verification of spam or not spam
+        //System.out.println("The prob of being spam is: " + probSpam);
+        //System.out.println("The prob of not being spam is: " + probNotSpam);
       }
       s.close();
     } catch (Exception e) {
-
+      e.printStackTrace();
     }
+
+    for (MailVector m : emailsAccuracy) {
+      if (m.getLabel() == m.getIsSpam()) {
+        accuracy++;
+      }
+    }
+    System.out.println("The accuracy is : " + (accuracy * 100) / emailsAccuracy.size() + "%");
+
+
   }
   public static void testingPurposes(String trainingData, String testingData) {
 
