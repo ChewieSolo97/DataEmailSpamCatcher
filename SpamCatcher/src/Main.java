@@ -134,7 +134,7 @@ public class Main {
       for (File file : dir.listFiles()) {
         //System.out.println("whats going on");
         s = new Scanner(file);
-        emailsAccuracy.add(new MailVector(file.getName().contains("spm") ? true : false));
+        emailsAccuracy.add(new MailVector(file.getName().contains("spm")));
         while (s.hasNext()) {
           words.add(s.next());
         }
@@ -143,13 +143,14 @@ public class Main {
           if(spam.keySet().contains(word)) {
             spamProb.add(spam.get(word) * email.get(word));
           } else {
-            spamProb.add(0.0); // fix this later, just using 0.0 for convenience
+            // using 1/k for zeros, k being the number of words in the email, may try other numbers later
+            spamProb.add(1.0 / words.size());
           }
         }
         double probSpam = 1;
         for (Double prob : spamProb) {
           //System.out.println("Spam prob is: " + prob);
-          probSpam += (prob);
+          probSpam += Math.log(prob);
         }
 
 
@@ -157,12 +158,13 @@ public class Main {
           if(notSpam.keySet().contains(word)) {
             notSpamProb.add(notSpam.get(word) * email.get(word));
           } else {
-            notSpamProb.add(0.0); // fix this later, just using 0.0 for convenience
+            // using 1/k for zeros, k being the number of words in the email, may try other numbers later
+            notSpamProb.add(1.0 / words.size());
           }
         }
         double probNotSpam = 1;
         for (Double prob : notSpamProb) {
-          probNotSpam += (prob);
+          probNotSpam += Math.log(prob);
         }
 
         if (probSpam > probNotSpam) {

@@ -24,7 +24,7 @@ public class MailVector {
   }
 
   public boolean getLabel() {
-    return isSpam;
+    return label;
   }
 
   public void setSpam(boolean spam) {
